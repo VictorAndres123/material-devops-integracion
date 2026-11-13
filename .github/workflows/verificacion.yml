@@ -1,0 +1,56 @@
+# Repite en GitHub la verificación de la Semana 1: tests, imagen Docker, seed y compose.
+name: Verificación
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest tests/ -v
+      - name: Los tests no dejan archivos .db
+        run: test -z "$(find . -name '*.db')"
+      - name: Seed y --force
+        run: |
+          python seed.py
+          python seed.py
+          python seed.py --force
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir la imagen multietapa
+        run: docker build -t devops-task-api:local .
+      - name: Arrancar el contenedor y comprobar /health, /docs y el usuario
+        run: |
+          docker run -d --name api -p 8000:8000 devops-task-api:local
+          sleep 5
+          curl --fail http://localhost:8000/health
+          curl --fail -o /dev/null http://localhost:8000/docs
+          test "$(docker exec api whoami)" = "appuser"
+      - name: Seed dentro del contenedor
+        run: |
+          docker exec api python seed.py
+          docker exec api python seed.py --force
+          test "$(curl -s http://localhost:8000/tasks/ | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" = "10"
+          docker rm -f api
+      - name: docker compose con hot-reload
+        run: |
+          docker compose up --build -d
+          sleep 8
+          curl --fail http://localhost:8000/health
+          docker compose logs | grep "Started reloader process"
+          docker compose down -v

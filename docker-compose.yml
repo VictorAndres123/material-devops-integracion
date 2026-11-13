@@ -1,0 +1,16 @@
+# Entorno de desarrollo: misma imagen del Dockerfile, pero con el código
+# montado desde el host y uvicorn en modo --reload.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app        # el código local reemplaza al de la imagen (hot-reload)
+      - task-data:/app/data   # la BD SQLite se conserva entre reinicios
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - PYTHONUNBUFFERED=1
+
+volumes:
+  task-data:
