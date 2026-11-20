@@ -62,7 +62,7 @@ def test_health_check() -> None:
     """GET /health responde 200 con el estado ok."""
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok"}
+    assert r.json() == {"status": "roto-a-proposito"}  # fallo intencional para la evidencia
 
 
 # --- Crear ----------------------------------------------------------------
