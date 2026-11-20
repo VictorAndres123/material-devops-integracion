@@ -9,3 +9,15 @@ __pycache__
 .vscode
 .idea
 README.md
+
+# Semana 2: nada de esto entra en la imagen. Excluirlo reduce el
+# contexto que Jenkins envía al daemon y evita que un reporte nuevo
+# invalide la caché de capas.
+jenkins/
+Jenkinsfile
+tests/
+.github/
+test-report.xml
+coverage.xml
+.coverage
+htmlcov/

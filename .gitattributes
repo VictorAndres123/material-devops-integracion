@@ -1,0 +1,12 @@
+# Normaliza los finales de línea al hacer commit.
+* text=auto
+
+# Estos archivos se ejecutan o se leen dentro de contenedores Linux:
+# con CRLF, bash falla con "/bin/bash^M: bad interpreter" y Jenkins
+# no arranca. Se fuerzan a LF aunque el repo se clone en Windows.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+Jenkinsfile text eol=lf
+*.yml       text eol=lf
+
+*.png       binary
