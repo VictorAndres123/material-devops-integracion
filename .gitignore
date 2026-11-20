@@ -17,3 +17,9 @@ env/
 # Editores
 .vscode/
 .idea/
+
+# Reportes que genera el pipeline (o pytest en local)
+test-report.xml
+coverage.xml
+.coverage
+htmlcov/

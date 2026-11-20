@@ -1,0 +1,4 @@
+# Dependencias para CI y desarrollo. El Dockerfile solo instala
+# requirements.txt, así que pytest-cov no entra en la imagen.
+-r requirements.txt
+pytest-cov==6.0.0
