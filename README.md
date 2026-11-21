@@ -6,7 +6,7 @@ Autor: Victor Andres Rojas Meneses
 
 ## Stack
 
-Python 3.10 o superior en local y 3.12-slim en la imagen Docker. Las versiones de las librerías están fijadas en `requirements.txt`: FastAPI 0.115.0, Uvicorn 0.30.0, SQLAlchemy 2.0.40, Pydantic 2.10.3, pytest 8.2.0 y httpx 0.27.0.
+Python 3.11 o superior en local y 3.12-slim en la imagen Docker. Las versiones de las librerías están fijadas en `requirements.txt`: FastAPI 0.165.0, Uvicorn 0.30.0, SQLAlchemy 2.0.40, Pydantic 2.10.3; las de pruebas (pytest 8.2.0, httpx 0.27.0, pytest-cov) y seguridad (bandit, pip-audit) están en `requirements-dev.txt`.
 
 ## Estructura
 
@@ -125,4 +125,4 @@ El usuario se crea con `useradd` en lugar de `adduser`. La imagen `python:3.12-s
 | `docker run -p 8000:8000 devops-task-api:local` | lo mismo en http://localhost:8000, y `docker exec <contenedor> whoami` responde `appuser` |
 | `docker compose up --build` | el log muestra `Started reloader process` y cada cambio en `app/` reinicia el servidor |
 
-El flujo `.github/workflows/verificacion.yml` ejecuta estos mismos pasos en GitHub Actions con cada push: los tests en Python 3.10 y 3.12, el build de la imagen, el seed dentro del contenedor y el arranque con compose. El resultado se ve en la pestaña Actions del repositorio.
+El flujo `.github/workflows/verificacion.yml` ejecuta estos mismos pasos en GitHub Actions con cada push: los tests en Python 3.11 y 3.12, el build de la imagen, el seed dentro del contenedor y el arranque con compose. El resultado se ve en la pestaña Actions del repositorio.
