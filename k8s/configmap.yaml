@@ -1,0 +1,12 @@
+# Configuración no sensible de la API, inyectada con envFrom (paso 19).
+# Nada de credenciales aquí: eso va en un Secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskapi-config
+  namespace: devops-project
+  labels:
+    app: taskapi
+data:
+  PYTHONUNBUFFERED: "1"
+  APP_ENV: "production"

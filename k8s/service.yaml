@@ -1,0 +1,19 @@
+# Expone la API en http://localhost (puerto 80 -> 8000 del contenedor), paso 18.
+# En Docker Desktop el LoadBalancer se publica en localhost; en EKS/AKS/GKE
+# el proveedor asignaría una IP pública.
+apiVersion: v1
+kind: Service
+metadata:
+  name: taskapi-service
+  namespace: devops-project
+  labels:
+    app: taskapi
+spec:
+  type: LoadBalancer
+  selector:
+    app: taskapi
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8000

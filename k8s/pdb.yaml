@@ -1,0 +1,14 @@
+# Durante un mantenimiento del nodo (kubectl drain) o una eviction, siempre
+# queda al menos un pod atendiendo. Complementa el RollingUpdate.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: taskapi-pdb
+  namespace: devops-project
+  labels:
+    app: taskapi
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: taskapi

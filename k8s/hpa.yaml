@@ -1,0 +1,40 @@
+# Escala el Deployment entre 2 y 5 pods según la CPU (paso 20).
+# El porcentaje se calcula sobre requests.cpu (100m), así que el umbral
+# real es 60m por pod en promedio. Requiere metrics-server.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: taskapi-hpa
+  namespace: devops-project
+  labels:
+    app: taskapi
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: taskapi
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+  behavior:
+    scaleUp:
+      # Sube rápido: hasta 2 pods nuevos cada 30 s si la carga lo pide.
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 30
+    scaleDown:
+      # Baja despacio para no oscilar. Por defecto son 300 s; con 120 s la
+      # demo del video se ve completa sin esperar cinco minutos.
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

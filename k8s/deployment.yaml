@@ -1,0 +1,117 @@
+# Pods de la API: 2 réplicas, probes sobre /health y SQLite en emptyDir (paso 17).
+# Además de lo que pide la guía, el Deployment queda endurecido para el perfil
+# "restricted" de Pod Security y para hacer rollouts sin cortar el servicio.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskapi
+  namespace: devops-project
+  labels:
+    app: taskapi
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5          # versiones guardadas para kubectl rollout undo
+  selector:
+    matchLabels:
+      app: taskapi
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1                  # primero levanta un pod nuevo...
+      maxUnavailable: 0            # ...y no baja uno viejo hasta que el nuevo esté Ready
+  template:
+    metadata:
+      labels:
+        app: taskapi
+    spec:
+      # La API no habla con el API server de Kubernetes: no necesita token.
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000            # appuser en la imagen (USER 1000)
+        runAsGroup: 1000
+        fsGroup: 1000              # el emptyDir queda escribible para appuser
+        seccompProfile:
+          type: RuntimeDefault
+      # Reparte las réplicas entre nodos y zonas cuando existan. Con
+      # ScheduleAnyway el clúster de un solo nodo de Docker Desktop sigue
+      # funcionando; en un clúster multinodo los pods se separan.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: taskapi
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: taskapi
+      containers:
+        - name: taskapi
+          image: vitokor123/devops-taskapi:latest   # el pipeline lo cambia a :BUILD_NUMBER
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: taskapi-config
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          # startupProbe: mientras arranca, liveness y readiness no corren.
+          # Da hasta 30 s (15 x 2 s) antes de dar el contenedor por muerto.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 2
+            failureThreshold: 15
+          # readiness: si falla, el pod sale del Service pero no se reinicia.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+          # liveness: si falla 3 veces seguidas, Kubernetes reinicia el contenedor.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+          lifecycle:
+            # Al terminar un pod, el Service tarda unos segundos en sacarlo de
+            # sus endpoints. Esperar 5 s antes de cerrar uvicorn evita que le
+            # lleguen peticiones a un proceso que ya se apagó (errores en el rollout).
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          volumeMounts:
+            - name: sqlite-data
+              mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp      # raíz de solo lectura: Python necesita un /tmp escribible
+      volumes:
+        # Vive lo que vive el pod. Cada réplica tiene su propia base SQLite;
+        # está aceptado para el entorno de aprendizaje (ver docs/semana3).
+        - name: sqlite-data
+          emptyDir:
+            sizeLimit: 100Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 50Mi

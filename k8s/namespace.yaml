@@ -1,0 +1,11 @@
+# Partición lógica del clúster para todo el proyecto (paso 16 de la guía).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops-project
+  labels:
+    project: devops-taskapi
+    # Pod Security Admission: el namespace rechaza pods que no cumplan el
+    # perfil "restricted" (root, escalada de privilegios, capabilities, etc.).
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
