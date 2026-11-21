@@ -87,10 +87,15 @@ pipeline {
                         -f txt -o reports/bandit.txt || { cat reports/bandit.txt; exit 1; }
                     cat reports/bandit.txt
 
+                    # pip-audit solo crea el archivo de --output cuando hay
+                    # hallazgos; por eso la salida se redirige desde la shell
+                    # y el reporte existe siempre, con o sin vulnerabilidades.
                     echo "== pip-audit: dependencias de requirements.txt"
+                    rc=0
                     pip-audit -r requirements.txt --progress-spinner off \
-                        --output reports/pip-audit.txt || { cat reports/pip-audit.txt; exit 1; }
+                        > reports/pip-audit.txt 2>&1 || rc=$?
                     cat reports/pip-audit.txt
+                    [ "$rc" -eq 0 ] || exit "$rc"
                 '''
 
                 // 5) Configuración insegura en manifiestos y Terraform.
