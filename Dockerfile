@@ -21,14 +21,15 @@ COPY --from=builder /install /usr/local
 
 # Usuario sin privilegios y carpeta propia para el archivo SQLite.
 # Se usa useradd porque la base Debian 13 (trixie) de python:3.12-slim ya no trae adduser.
-RUN useradd --create-home appuser \
+RUN useradd --uid 1000 --create-home appuser \
     && mkdir -p /app/data \
     && chown appuser:appuser /app/data
 
 COPY app/ ./app/
 COPY seed.py .
 
-USER appuser
+# UID numérico: Kubernetes solo puede comprobar runAsNonRoot con un número.
+USER 1000
 
 # Ruta de la BD dentro del contenedor (se puede cambiar con -e DATABASE_URL=...)
 ENV DATABASE_URL=sqlite:////app/data/tasks.db

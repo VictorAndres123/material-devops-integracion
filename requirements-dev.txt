@@ -1,4 +1,7 @@
 # Dependencias para CI y desarrollo. El Dockerfile solo instala
-# requirements.txt, así que pytest-cov no entra en la imagen.
+# requirements.txt, así que nada de esto entra en la imagen.
+# httpx lo usa el TestClient de FastAPI.
 -r requirements.txt
 pytest-cov==6.0.0
+pytest==8.2.0
+httpx==0.27.0

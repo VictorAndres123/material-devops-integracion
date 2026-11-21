@@ -8,5 +8,7 @@
 Dockerfile  text eol=lf
 Jenkinsfile text eol=lf
 *.yml       text eol=lf
+*.yaml      text eol=lf
+*.tf        text eol=lf
 
 *.png       binary
