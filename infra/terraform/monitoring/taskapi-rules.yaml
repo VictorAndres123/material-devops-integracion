@@ -1,0 +1,105 @@
+# Alertas de la DevOps Task Manager API. Severidades:
+#   critical → la API no atiende o falla para los usuarios
+#   warning  → se degrada o va a degradarse si la tendencia sigue
+groups:
+  - name: taskapi.disponibilidad
+    rules:
+      - alert: TaskApiCaida
+        expr: |
+          sum(up{namespace="devops-project", job="taskapi-service"}) == 0
+            or absent(up{namespace="devops-project", job="taskapi-service"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "La API no responde a Prometheus"
+          description: "Ningún pod de taskapi expone /metrics desde hace 1 minuto."
+
+      - alert: TaskApiReplicasDegradadas
+        expr: |
+          kube_deployment_status_replicas_available{namespace="devops-project", deployment="taskapi"} < 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Menos de 2 réplicas disponibles"
+          description: "El Deployment taskapi tiene {{ $value }} réplica(s) disponible(s). Sin la segunda, no hay alta disponibilidad."
+
+      - alert: TaskApiCrashLoop
+        expr: |
+          max_over_time(kube_pod_container_status_waiting_reason{namespace="devops-project", reason="CrashLoopBackOff"}[5m]) >= 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod en CrashLoopBackOff"
+          description: "El pod {{ $labels.pod }} se reinicia en bucle."
+
+  - name: taskapi.trafico
+    rules:
+      - alert: TaskApiErroresAltos
+        expr: |
+          sum(rate(http_requests_total{namespace="devops-project", job="taskapi-service", status="5xx"}[5m]))
+            /
+          sum(rate(http_requests_total{namespace="devops-project", job="taskapi-service"}[5m]))
+            > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Más del 5 % de las peticiones terminan en 5xx"
+          description: "Tasa de errores 5xx: {{ $value | humanizePercentage }}."
+
+      - alert: TaskApiLatenciaAlta
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_request_duration_highr_seconds_bucket{namespace="devops-project", job="taskapi-service"}[5m]))
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 por encima de 500 ms"
+          description: "El p95 de la latencia está en {{ $value | humanizeDuration }}."
+
+  - name: taskapi.capacidad
+    rules:
+      - alert: TaskApiHpaAlMaximo
+        expr: |
+          kube_horizontalpodautoscaler_status_current_replicas{namespace="devops-project", horizontalpodautoscaler="taskapi-hpa"}
+            >= on (namespace, horizontalpodautoscaler)
+          kube_horizontalpodautoscaler_spec_max_replicas{namespace="devops-project", horizontalpodautoscaler="taskapi-hpa"}
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "El HPA llegó a su máximo de réplicas"
+          description: "taskapi está en {{ $value }} réplicas, el tope del HPA. Si la carga sigue subiendo, ya no puede escalar."
+
+      # Alertas predictivas: avisan antes de que el problema ocurra,
+      # extrapolando la tendencia de los últimos 30 minutos.
+      - alert: TaskApiMemoriaSeAgotaraPronto
+        expr: |
+          predict_linear(container_memory_working_set_bytes{namespace="devops-project", container="taskapi"}[30m], 3600)
+            > on (namespace, pod, container)
+          kube_pod_container_resource_limits{namespace="devops-project", container="taskapi", resource="memory"}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "La memoria llegará al límite en menos de 1 hora"
+          description: "Con la tendencia actual, {{ $labels.pod }} alcanzaría su límite de memoria y sería reiniciado (OOMKilled)."
+
+      - alert: TaskApiCpuSaturacionPrevista
+        expr: |
+          predict_linear(
+            rate(container_cpu_usage_seconds_total{namespace="devops-project", container="taskapi"}[2m])[30m:1m], 900
+          )
+            > on (namespace, pod, container)
+          0.9 * kube_pod_container_resource_limits{namespace="devops-project", container="taskapi", resource="cpu"}
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "La CPU llegará al 90 % del límite en 15 minutos"
+          description: "{{ $labels.pod }} va camino a quedar limitado (throttling) por CPU."

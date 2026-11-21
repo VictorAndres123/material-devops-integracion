@@ -33,3 +33,29 @@ variable "metrics_server_chart_version" {
   type        = string
   default     = "3.12.2"
 }
+
+# Versiones verificadas el 20/11/2026 contra los tags de cada repositorio.
+# El chart OSS de Loki se mudó a grafana-community en marzo de 2026.
+variable "kube_prometheus_stack_chart_version" {
+  description = "Chart kube-prometheus-stack (prometheus-community)."
+  type        = string
+  default     = "93.6.1"
+}
+
+variable "loki_chart_version" {
+  description = "Chart loki (grafana-community)."
+  type        = string
+  default     = "21.4.3"
+}
+
+variable "alloy_chart_version" {
+  description = "Chart alloy (grafana)."
+  type        = string
+  default     = "1.16.0"
+}
+
+variable "grafana_port" {
+  description = "Puerto de Grafana en localhost (Service LoadBalancer de Docker Desktop)."
+  type        = number
+  default     = 3000
+}

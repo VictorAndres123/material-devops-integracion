@@ -10,3 +10,12 @@ output "deployer_service_account" {
 output "resource_quota" {
   value = kubernetes_resource_quota_v1.app.spec[0].hard
 }
+
+output "grafana_url" {
+  value = "http://localhost:${var.grafana_port}  (usuario: admin)"
+}
+
+output "grafana_admin_password" {
+  value     = random_password.grafana_admin.result
+  sensitive = true
+}

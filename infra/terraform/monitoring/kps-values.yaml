@@ -1,0 +1,109 @@
+# kube-prometheus-stack con valores livianos para Docker Desktop.
+fullnameOverride: kps
+
+# Docker Desktop no expone etcd, scheduler, controller-manager ni kube-proxy
+# a Prometheus. Si se dejan activos, sus alertas TargetDown quedan disparadas
+# todo el tiempo y tapan las alertas que importan.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+# node-exporter necesita montar la raíz del host, y en Docker Desktop esa
+# propagación de montajes falla. Las métricas de pods y contenedores salen
+# de cAdvisor (kubelet) y kube-state-metrics, que es lo que usa el dashboard.
+nodeExporter:
+  enabled: false
+
+defaultRules:
+  create: true
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeProxy: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    node: false
+    nodeExporterAlerting: false
+    nodeExporterRecording: false
+    kubePrometheusNodeRecording: false
+    windows: false
+
+prometheus:
+  prometheusSpec:
+    retention: 24h
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    # Sin esto, Prometheus solo lee ServiceMonitors y reglas que tengan la
+    # etiqueta del release.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+  # La API expone /metrics en el puerto "http" del Service taskapi-service.
+  additionalServiceMonitors:
+    taskapi:
+      namespaceSelector:
+        matchNames:
+          - devops-project
+      selector:
+        matchLabels:
+          app: taskapi
+      endpoints:
+        - port: http
+          path: /metrics
+          interval: 15s
+
+alertmanager:
+  alertmanagerSpec:
+    retention: 24h
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      memory: 256Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 192Mi
+
+grafana:
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 192Mi
+    limits:
+      memory: 384Mi
+  defaultDashboardsTimezone: America/Bogota
+  additionalDataSources:
+    - name: Loki
+      uid: loki
+      type: loki
+      access: proxy
+      url: http://loki.monitoring.svc.cluster.local:3100
+      jsonData:
+        maxLines: 1000
