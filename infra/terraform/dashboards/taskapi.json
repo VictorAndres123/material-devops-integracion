@@ -546,7 +546,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"devops-project\", container=\"taskapi\"}[1m]))",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"devops-project\", pod=~\"taskapi-.*\"}[1m]))",
           "legendFormat": "{{pod}}",
           "refId": "A"
         },
@@ -822,7 +822,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"devops-project\", container=\"taskapi\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"devops-project\", pod=~\"taskapi-.*\"})",
           "legendFormat": "{{pod}} actual",
           "refId": "A"
         },
@@ -831,7 +831,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (predict_linear(container_memory_working_set_bytes{namespace=\"devops-project\", container=\"taskapi\"}[30m], 3600))",
+          "expr": "sum by (pod) (predict_linear(container_memory_working_set_bytes{namespace=\"devops-project\", pod=~\"taskapi-.*\"}[30m], 3600))",
           "legendFormat": "{{pod}} en 1 h",
           "refId": "B"
         },
@@ -920,7 +920,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"devops-project\", container=\"taskapi\"}[2m]))",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"devops-project\", pod=~\"taskapi-.*\"}[2m]))",
           "legendFormat": "{{pod}} actual",
           "refId": "A"
         },
@@ -929,7 +929,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (pod) (predict_linear(rate(container_cpu_usage_seconds_total{namespace=\"devops-project\", container=\"taskapi\"}[2m])[30m:1m], 900))",
+          "expr": "sum by (pod) (predict_linear(rate(container_cpu_usage_seconds_total{namespace=\"devops-project\", pod=~\"taskapi-.*\"}[2m])[30m:1m], 900))",
           "legendFormat": "{{pod}} en 15 min",
           "refId": "B"
         },

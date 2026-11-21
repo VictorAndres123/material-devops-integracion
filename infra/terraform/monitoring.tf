@@ -72,8 +72,10 @@ resource "helm_release" "alloy" {
 
   values = [file("${path.module}/monitoring/alloy-values.yaml")]
 
+  # 10 minutos: la primera instalación descarga ~240 MB de imágenes (Alloy y
+  # su config-reloader) y en la laptop eso tomó más de 5.
   wait       = true
-  timeout    = 300
+  timeout    = 600
   depends_on = [helm_release.loki]
 }
 

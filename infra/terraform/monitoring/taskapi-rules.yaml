@@ -78,11 +78,15 @@ groups:
 
       # Alertas predictivas: avisan antes de que el problema ocurra,
       # extrapolando la tendencia de los últimos 30 minutos.
+      # En Docker Desktop, cAdvisor publica el uso por pod y no por
+      # contenedor (las series no traen la etiqueta container). Por eso el
+      # uso se filtra por pod y los límites se suman por pod; como cada pod
+      # tiene un solo contenedor, el resultado es el mismo.
       - alert: TaskApiMemoriaSeAgotaraPronto
         expr: |
-          predict_linear(container_memory_working_set_bytes{namespace="devops-project", container="taskapi"}[30m], 3600)
-            > on (namespace, pod, container)
-          kube_pod_container_resource_limits{namespace="devops-project", container="taskapi", resource="memory"}
+          predict_linear(container_memory_working_set_bytes{namespace="devops-project", pod=~"taskapi-.*"}[30m], 3600)
+            > on (namespace, pod)
+          sum by (namespace, pod) (kube_pod_container_resource_limits{namespace="devops-project", container="taskapi", resource="memory"})
         for: 10m
         labels:
           severity: warning
@@ -93,10 +97,10 @@ groups:
       - alert: TaskApiCpuSaturacionPrevista
         expr: |
           predict_linear(
-            rate(container_cpu_usage_seconds_total{namespace="devops-project", container="taskapi"}[2m])[30m:1m], 900
+            rate(container_cpu_usage_seconds_total{namespace="devops-project", pod=~"taskapi-.*"}[2m])[30m:1m], 900
           )
-            > on (namespace, pod, container)
-          0.9 * kube_pod_container_resource_limits{namespace="devops-project", container="taskapi", resource="cpu"}
+            > on (namespace, pod)
+          0.9 * sum by (namespace, pod) (kube_pod_container_resource_limits{namespace="devops-project", container="taskapi", resource="cpu"})
         for: 5m
         labels:
           severity: warning

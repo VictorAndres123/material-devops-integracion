@@ -29,6 +29,14 @@ Todo lo de monitoreo es código: si se borra el namespace `monitoring`, un `terr
 
 **Latencia con el histograma de alta resolución.** El instrumentador expone dos histogramas. El que tiene etiqueta de ruta solo tiene los buckets 0,1, 0,5 y 1 s, muy gruesos para un p95. Las alertas y el panel de latencia usan `http_request_duration_highr_seconds`, que tiene 20 buckets.
 
+## Problemas reales durante la instalación
+
+**Alloy superó el timeout de Helm.** La primera instalación tuvo que descargar unos 240 MB de imágenes (Alloy v1.22.0 y su config-reloader) y tardó más de los 300 s configurados. El pod quedó sano, pero Helm marcó el release como `failed` y Terraform lo dejó *tainted*. Se resolvió con `terraform untaint helm_release.alloy`, para no recrear un recurso que estaba bien, y subiendo el timeout a 600 s.
+
+**cAdvisor en Docker Desktop no publica la etiqueta `container`.** El panel de CPU salía vacío. Prometheus sí raspaba cAdvisor (`up` = 1), pero `container_cpu_usage_seconds_total` solo traía `namespace` y `pod`: en este entorno el uso se reporta por pod. Las consultas del dashboard y las dos alertas predictivas se cambiaron para filtrar por `pod=~"taskapi-.*"` y sumar los límites por pod. Como cada pod tiene un solo contenedor, el resultado es equivalente. En un clúster administrado (EKS, AKS, GKE) las series sí traen `container` y las consultas originales funcionarían.
+
+**Idempotencia.** Después de las correcciones, `terraform plan -detailed-exitcode` devolvió `0` ("No changes"): los 20 recursos de las Fases 2 y 3 coinciden con el código.
+
 ## Comandos (PowerShell)
 
 ```powershell
