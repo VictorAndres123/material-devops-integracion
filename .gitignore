@@ -23,3 +23,10 @@ test-report.xml
 coverage.xml
 .coverage
 htmlcov/
+
+# Terraform (estado y archivos generados con credenciales)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+infra/terraform/out/

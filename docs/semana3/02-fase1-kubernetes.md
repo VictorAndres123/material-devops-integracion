@@ -36,7 +36,7 @@ docker push vitokor123/devops-taskapi:latest
 
 # 1. metrics-server (Docker Desktop no lo trae)
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-kubectl patch deployment metrics-server -n kube-system --type=json -p '[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/args/-\",\"value\":\"--kubelet-insecure-tls\"}]'
+kubectl patch deployment metrics-server -n kube-system --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 kubectl rollout status deployment/metrics-server -n kube-system --timeout=120s
 kubectl top nodes
 
@@ -53,11 +53,12 @@ kubectl get all,pdb,hpa -n devops-project
 curl.exe http://localhost/health
 ```
 
-En el paso 1, si PowerShell rompe el JSON del patch, usa este en su lugar:
+El patch está escrito para PowerShell 7.3 o superior, que pasa las comillas tal cual a los programas externos. En Windows PowerShell 5.1 hay que escapar cada comilla doble como `\"`. Si falla en cualquier versión, el camino sin problemas de comillas es un archivo:
 
 ```powershell
-kubectl edit deployment metrics-server -n kube-system
-# y agrega la línea  - --kubelet-insecure-tls  debajo de "args:"
+'[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]' | Set-Content patch-ms.json
+kubectl patch deployment metrics-server -n kube-system --type=json --patch-file=patch-ms.json
+Remove-Item patch-ms.json
 ```
 
 ## Prueba de alta disponibilidad (borrar un pod sin cortar el servicio)
