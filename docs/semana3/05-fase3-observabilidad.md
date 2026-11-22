@@ -35,7 +35,7 @@ Todo lo de monitoreo es código: si se borra el namespace `monitoring`, un `terr
 
 **cAdvisor en Docker Desktop no publica la etiqueta `container`.** El panel de CPU salía vacío. Prometheus sí raspaba cAdvisor (`up` = 1), pero `container_cpu_usage_seconds_total` solo traía `namespace` y `pod`: en este entorno el uso se reporta por pod. Las consultas del dashboard y las dos alertas predictivas se cambiaron para filtrar por `pod=~"taskapi-.*"` y sumar los límites por pod. Como cada pod tiene un solo contenedor, el resultado es equivalente. En un clúster administrado (EKS, AKS, GKE) las series sí traen `container` y las consultas originales funcionarían.
 
-**Idempotencia.** Después de las correcciones, `terraform plan -detailed-exitcode` devolvió `0` ("No changes"): los 20 recursos de las Fases 2 y 3 coinciden con el código.
+**Idempotencia.** Después de las correcciones, `terraform plan -detailed-exitcode` devolvió `0` ("No changes"): los 18 recursos de las Fases 2 y 3 coinciden con el código.
 
 ## Comandos (PowerShell)
 

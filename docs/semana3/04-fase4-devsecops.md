@@ -20,7 +20,7 @@ En el Stage View, los stages que no corrieron después de un fallo salen en rojo
 | Test | pip-audit 2.10.1 sobre `requirements.txt` | Sin vulnerabilidades conocidas |
 | Test | Trivy config sobre `k8s/` | 0 HIGH/CRITICAL en 6 manifiestos |
 | Test | Trivy config sobre `infra/terraform/` | 0 HIGH/CRITICAL |
-| Build | Trivy image (CRITICAL con parche disponible) | 0 en Debian 13.7 y en los 18 paquetes Python |
+| Build | Trivy image (CRITICAL con parche disponible) | 0 en Debian 13.7 y en los 17 paquetes Python |
 | Build | SBOM CycloneDX | `reports/sbom.cdx.json` archivado |
 | Push | `:11` y `:latest` | Mismo digest `sha256:f0ab28dd…2323` |
 | Deploy | kubectl con `jenkins-deployer` | Cliente y servidor v1.32.2, TLS verificado |
